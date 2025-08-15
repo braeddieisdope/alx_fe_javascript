@@ -85,10 +85,10 @@ function importFromJsonFile(event) {
 // --- Syncing & Conflict Resolution Functions ---
 
 /**
- * syncWithServer() - Fetches data from a mock server and syncs with local storage.
+ * fetchQuotesFromServer() - Fetches data from a mock server and syncs with local storage.
  * Simulates real-world data synchronization.
  */
-async function syncWithServer() {
+async function fetchQuotesFromServer() {
     try {
         // Simulate a network request. Using JSONPlaceholder for a mock API endpoint.
         const response = await fetch('https://jsonplaceholder.typicode.com/posts?_limit=5');
@@ -127,10 +127,10 @@ async function syncWithServer() {
 
 /**
  * scheduleSync() - Schedules a periodic sync with the server.
- * This function will call syncWithServer every 60 seconds (60000ms).
+ * This function will call fetchQuotesFromServer every 60 seconds (60000ms).
  */
 function scheduleSync() {
-    setInterval(syncWithServer, 60000); // Sync every minute.
+    setInterval(fetchQuotesFromServer, 60000); // Sync every minute.
 }
 
 // --- Filtering Functions ---
