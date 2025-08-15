@@ -82,15 +82,65 @@ function importFromJsonFile(event) {
     fileReader.readAsText(event.target.files[0]);
 }
 
+// --- Syncing & Conflict Resolution Functions ---
+
+/**
+ * syncWithServer() - Fetches data from a mock server and syncs with local storage.
+ * Simulates real-world data synchronization.
+ */
+async function syncWithServer() {
+    try {
+        // Simulate a network request. Using JSONPlaceholder for a mock API endpoint.
+        const response = await fetch('https://jsonplaceholder.typicode.com/posts?_limit=5');
+        const serverPosts = await response.json();
+
+        // Convert the server's posts into our quotes format.
+        const serverQuotes = serverPosts.map(post => ({
+            text: post.title,
+            category: 'Server'
+        }));
+
+        // Conflict resolution strategy: Server data takes precedence.
+        // We will merge local and server quotes, giving priority to server data.
+        const mergedQuotes = [...quotes, ...serverQuotes];
+
+        // Remove duplicates. A simple way to handle this is to use a Set based on quote text.
+        // This is a basic approach and more complex strategies might be needed in a real app.
+        const uniqueQuotes = Array.from(new Set(mergedQuotes.map(q => JSON.stringify(q))))
+            .map(s => JSON.parse(s));
+
+        // Update the local quotes array and save to local storage.
+        quotes = uniqueQuotes;
+        saveQuotes();
+
+        // Update UI elements to reflect changes.
+        populateCategories();
+        filterQuotes();
+
+        showMessage('Data synced with server! New quotes may have been added.', 'bg-green-100 text-green-800');
+
+    } catch (error) {
+        showMessage('Error syncing with server. Please try again later.', 'bg-red-100 text-red-800');
+        console.error('Sync failed:', error);
+    }
+}
+
+/**
+ * scheduleSync() - Schedules a periodic sync with the server.
+ * This function will call syncWithServer every 60 seconds (60000ms).
+ */
+function scheduleSync() {
+    setInterval(syncWithServer, 60000); // Sync every minute.
+}
+
 // --- Filtering Functions ---
 
 /**
  * populateCategories() - Dynamically populates the category filter dropdown.
- * This function extracts unique categories from the quotes array.
  */
 function populateCategories() {
     const categories = ['all', ...new Set(quotes.map(quote => quote.category))];
-    categoryFilter.innerHTML = ''; // Clear existing options.
+    categoryFilter.innerHTML = '';
 
     categories.forEach(category => {
         const option = document.createElement('option');
@@ -99,7 +149,6 @@ function populateCategories() {
         categoryFilter.appendChild(option);
     });
 
-    // Restore the last selected category from local storage.
     const lastFilter = localStorage.getItem('lastFilter');
     if (lastFilter) {
         categoryFilter.value = lastFilter;
@@ -108,25 +157,20 @@ function populateCategories() {
 
 /**
  * filterQuotes() - Filters the displayed quotes based on the selected category.
- * This function is called when the dropdown value changes.
  */
 function filterQuotes() {
     const selectedCategory = categoryFilter.value;
-
-    // Save the selected filter to local storage.
     localStorage.setItem('lastFilter', selectedCategory);
     
-    // Filter the quotes array.
     const filteredQuotes = selectedCategory === 'all' ? quotes : quotes.filter(quote => quote.category === selectedCategory);
     
-    // Display a random quote from the filtered list.
     showRandomQuote(filteredQuotes);
 }
 
 // --- Event Listeners ---
 function createAddQuoteForm() {
     newQuoteBtn.addEventListener('click', () => {
-        filterQuotes(); // Show a new quote from the current filtered list.
+        filterQuotes();
     });
     addQuoteBtn.addEventListener('click', () => {
         addQuote();
@@ -134,14 +178,13 @@ function createAddQuoteForm() {
     });
     exportQuotesBtn.addEventListener('click', exportQuotesToJson);
     importFile.addEventListener('change', importFromJsonFile);
-    categoryFilter.addEventListener('change', filterQuotes); // Listen for changes in the filter dropdown.
+    categoryFilter.addEventListener('change', filterQuotes);
 }
 
 // --- Core Functions ---
 
 /**
  * showRandomQuote(filteredQuotes = quotes) - Displays a random quote from a given array.
- * @param {Array} filteredQuotes - An array of quote objects to choose from. Defaults to the full quotes array.
  */
 function showRandomQuote(filteredQuotes = quotes) {
     if (filteredQuotes.length === 0) {
@@ -185,7 +228,6 @@ function addQuote() {
         newQuoteText.value = '';
         newQuoteCategory.value = '';
 
-        // Update the categories and re-filter after adding a new quote.
         populateCategories();
         filterQuotes();
     } else {
@@ -210,6 +252,7 @@ function showMessage(message, classNames) {
 window.onload = () => {
     loadQuotes();
     createAddQuoteForm();
-    populateCategories(); // Populate categories on load.
-    filterQuotes(); // Apply the last saved filter or show all quotes.
+    populateCategories();
+    filterQuotes();
+    scheduleSync(); // Start the periodic sync.
 };
