@@ -1,4 +1,3 @@
-
 // Initial array of quote objects. This will be overwritten by localStorage if data exists.
 let quotes = [
     { text: "The only way to do great work is to love what you do.", category: "Work" },
