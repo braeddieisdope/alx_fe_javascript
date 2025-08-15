@@ -174,7 +174,6 @@ function createAddQuoteForm() {
     });
     addQuoteBtn.addEventListener('click', () => {
         addQuote();
-        saveQuotes();
     });
     exportQuotesBtn.addEventListener('click', exportQuotesToJson);
     importFile.addEventListener('change', importFromJsonFile);
@@ -182,6 +181,35 @@ function createAddQuoteForm() {
 }
 
 // --- Core Functions ---
+
+/**
+ * postQuoteToServer(newQuote) - Simulates a POST request to add a new quote to the server.
+ * @param {object} newQuote - The new quote object to post.
+ */
+async function postQuoteToServer(newQuote) {
+    try {
+        const response = await fetch('https://jsonplaceholder.typicode.com/posts', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                title: newQuote.text,
+                body: newQuote.category,
+                userId: 1 // A static user ID for the mock API
+            })
+        });
+
+        if (response.ok) {
+            showMessage('Quote posted to server!', 'bg-green-100 text-green-800');
+        } else {
+            showMessage('Error posting quote to server.', 'bg-red-100 text-red-800');
+        }
+    } catch (error) {
+        showMessage('Network error while posting quote.', 'bg-red-100 text-red-800');
+        console.error('Post failed:', error);
+    }
+}
 
 /**
  * showRandomQuote(filteredQuotes = quotes) - Displays a random quote from a given array.
@@ -224,12 +252,19 @@ function addQuote() {
         };
         quotes.push(newQuote);
 
-        showMessage('Quote added successfully!', 'bg-blue-100 text-blue-800');
-        newQuoteText.value = '';
-        newQuoteCategory.value = '';
+        // Simulate network delay for a more realistic user experience
+        setTimeout(() => {
+            // Post the new quote to the server
+            postQuoteToServer(newQuote);
+            // Save to local storage after the POST request is initiated
+            saveQuotes();
+            showMessage('Quote added successfully!', 'bg-blue-100 text-blue-800');
+            newQuoteText.value = '';
+            newQuoteCategory.value = '';
 
-        populateCategories();
-        filterQuotes();
+            populateCategories();
+            filterQuotes();
+        }, 500); // 500ms delay
     } else {
         showMessage('Please enter both a quote and a category.', 'bg-red-100 text-red-800');
     }
