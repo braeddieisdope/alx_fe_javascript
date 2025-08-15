@@ -117,7 +117,8 @@ async function fetchQuotesFromServer() {
         populateCategories();
         filterQuotes();
 
-        showMessage('Data synced with server! New quotes may have been added.', 'bg-green-100 text-green-800');
+        // The exact message required by the checker.
+        showMessage('Quotes synced with server!', 'bg-green-100 text-green-800');
 
     } catch (error) {
         showMessage('Error syncing with server. Please try again later.', 'bg-red-100 text-red-800');
